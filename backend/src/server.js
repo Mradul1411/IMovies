@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // Load environment variables
 dotenv.config();
@@ -44,14 +45,30 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting
 app.use('/api', apiLimiter);
 
-// Health check endpoint
+// Health check endpoint - always responds 200 OK so cloud host health checks pass
 app.get('/api/health', (req, res) => {
-  res.json({
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = dbState === 1 ? 'connected' : dbState === 2 ? 'connecting' : 'disconnected';
+  res.status(200).json({
     status: 'online',
     appName: 'IMovies API',
+    database: dbStatus,
     version: '1.0.0',
     time: new Date().toISOString()
   });
+});
+
+// Guard middleware: if DB is still connecting or not configured, return clear standby message
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health') return next();
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database is connecting or not yet configured. Please ensure MONGODB_URI is set in your environment variables.',
+      status: 'database_standby'
+    });
+  }
+  next();
 });
 
 // API Routes
@@ -84,15 +101,15 @@ initSeatSocket(io);
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to Database and start server
-connectDB().then(() => {
-  server.listen(PORT, () => {
-    console.log(`====================================================`);
-    console.log(`🎬 IMovies Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-    console.log(`📡 Real-Time Socket.io ready on ws://localhost:${PORT}`);
-    console.log(`====================================================`);
+// Start HTTP server immediately so cloud platforms (Render, Railway, etc.) pass port checks
+server.listen(PORT, () => {
+  console.log(`====================================================`);
+  console.log(`🎬 IMovies Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  console.log(`📡 Real-Time Socket.io ready on port ${PORT}`);
+  console.log(`====================================================`);
+
+  // Connect to Database asynchronously without blocking server startup or exiting with failure
+  connectDB().catch(err => {
+    console.warn('⚠️ Database connection warning:', err.message);
   });
-}).catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
 });

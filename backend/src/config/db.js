@@ -13,21 +13,20 @@ async function connectDB() {
       });
       console.log('🚀 Connected to MongoDB instance successfully.');
       await seedDatabase();
-      return;
+      return true;
     } catch (err) {
       console.warn(`⚠️ Could not connect to primary MongoDB (${err.message}).`);
       if (isProd) {
-        throw new Error(
-          'Production MongoDB connection failed. Please ensure a valid MONGODB_URI (e.g. MongoDB Atlas cluster) is configured in your environment variables.'
-        );
+        console.warn('👉 Please verify MONGODB_URI in Render and ensure Network Access (0.0.0.0/0) is allowed in MongoDB Atlas.');
+        return false;
       }
     }
   }
 
   // In development / local testing: graceful fallback to in-memory MongoDB
-  console.log('🔄 Spinning up embedded in-memory MongoDB server for seamless zero-setup execution...');
   try {
     const { MongoMemoryServer } = require('mongodb-memory-server');
+    console.log('🔄 Spinning up embedded in-memory MongoDB server for seamless zero-setup execution...');
     const mongod = await MongoMemoryServer.create();
     const inMemoryUri = mongod.getUri();
     console.log(`✨ In-memory MongoDB started at: ${inMemoryUri}`);
@@ -35,9 +34,11 @@ async function connectDB() {
     await mongoose.connect(inMemoryUri);
     console.log('🚀 Connected to in-memory MongoDB instance successfully.');
     await seedDatabase();
+    return true;
   } catch (memErr) {
-    console.error('❌ Failed to start in-memory MongoDB:', memErr.message);
-    throw memErr;
+    console.warn('⚠️ In-memory MongoDB not available in production without devDependencies.');
+    console.warn('👉 Server running in standby mode. Please set MONGODB_URI in your Render environment variables to activate full database functionality.');
+    return false;
   }
 }
 
