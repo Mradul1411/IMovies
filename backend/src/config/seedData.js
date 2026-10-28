@@ -1213,6 +1213,9 @@ async function ensureDefaultUsers() {
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
     });
     console.log('👤 Admin user created: admin@imovies.com / admin123');
+  } else if (existingAdmin.role !== 'admin') {
+    existingAdmin.role = 'admin';
+    await existingAdmin.save();
   }
 
   const existingDemoUser = await User.findOne({ email: 'user@imovies.com' });
@@ -1234,6 +1237,14 @@ async function ensureDefaultUsers() {
       type: 'system'
     });
     console.log('👤 Demo user created: user@imovies.com / user123');
+  }
+
+  // Ensure Mradul Balani account has admin privileges
+  const personalAdmin = await User.findOne({ email: 'balanimradul@gmail.com' });
+  if (personalAdmin && personalAdmin.role !== 'admin') {
+    personalAdmin.role = 'admin';
+    await personalAdmin.save();
+    console.log('👤 Promoted balanimradul@gmail.com to admin role');
   }
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Mail, Lock, User, Phone, ShieldCheck, Film, Sparkles } from 'lucide-react';
+import { X, Mail, Lock, User, Phone, Film } from 'lucide-react';
 
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, authModalTab, openAuthModal, login, register } = useAuth();
@@ -55,21 +55,7 @@ export default function AuthModal() {
     }
   };
 
-  const handleDemoLogin = async (role) => {
-    setError('');
-    setLoading(true);
-    try {
-      if (role === 'admin') {
-        await login('admin@imovies.com', 'admin123');
-      } else {
-        await login('user@imovies.com', 'user123');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="modal-backdrop" onClick={closeAuthModal}>
@@ -139,58 +125,7 @@ export default function AuthModal() {
           </button>
         </div>
 
-        {/* Demo Login Quick Actions */}
-        <div style={{
-          marginBottom: '1.25rem',
-          padding: '0.75rem',
-          background: 'rgba(255, 255, 255, 0.03)',
-          border: '1px dashed var(--border-subtle)',
-          borderRadius: 'var(--radius-md)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            <Sparkles size={14} color="#fbbf24" /> One-Click Demo Credentials
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('user')}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: '0.45rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                background: 'rgba(59, 130, 246, 0.12)',
-                color: '#60a5fa',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                borderRadius: 'var(--radius-sm)'
-              }}
-            >
-              Demo User
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('admin')}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: '0.45rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                background: 'rgba(245, 158, 11, 0.12)',
-                color: '#fbbf24',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.3rem'
-              }}
-            >
-              <ShieldCheck size={14} /> Admin User
-            </button>
-          </div>
-        </div>
+
 
         {/* Error alert */}
         {error && (
